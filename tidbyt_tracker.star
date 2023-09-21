@@ -75,7 +75,7 @@ def get_weekday_number(timeInput):
         return 2
     if daystr == "Wednesday":
         return 3
-    if daystr == "Thrusday":
+    if daystr == "Thursday":
         return 4
     if daystr == "Friday":
         return 5
