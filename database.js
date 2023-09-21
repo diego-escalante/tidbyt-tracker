@@ -19,6 +19,11 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                 console.error(err.message)
                 throw err
             }
+            db.run(`CREATE TABLE IF NOT EXISTS trackers (
+                id INTEGER PRIMARY KEY,
+                habit TEXT NOT NULL,
+                
+            )`)
             console.log("Connected to the sqlite database successfully!")
             // generateTestEntries();
         });

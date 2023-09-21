@@ -1,6 +1,7 @@
 var express = require("express");
 var app = express();
 var db = require("./database.js");
+var config = require("config");
 const {exec} = require('child_process');
 
 var HTTP_PORT = 8000;
@@ -8,6 +9,9 @@ var HTTP_PORT = 8000;
 var bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+
+TIDBYT_DEVICE_ID = config.get("tidbyt_device_id")
+TIDBYT_API_TOKEN = config.get("tidbyt_api_token")
 
 // Start server
 app.listen(HTTP_PORT, () => {
@@ -89,12 +93,10 @@ app.use(function(req, res) {
 
 function pushToTidbyt(habit) {
     exec(`pixlet render tidbyt_tracker.star habit=${habit}`, (err, stdout, stderr) => {
-        console.log(`stdout: ${stdout}`);
-        console.log(`stderr: ${stderr}`);
         if (err) {
             return err;
         }
-        exec(`pixlet push -i ${habit}Tracker inanely-breezy-elevated-topi-85d tidbyt_tracker.webp`, (err, stdout, stderr) => {
+        exec(`pixlet push -i ${habit}Tracker -t ${TIDBYT_API_TOKEN} ${TIDBYT_DEVICE_ID} tidbyt_tracker.webp`, (err, stdout, stderr) => {
             if (err) {
                 return err;
             }
