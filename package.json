@@ -1,0 +1,16 @@
+{
+  "name": "tidbyt-tracker",
+  "version": "1.0.0",
+  "description": "A habit tracker to be displayed on a tidbyt.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Diego Escalante",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.6"
+  }
+}
