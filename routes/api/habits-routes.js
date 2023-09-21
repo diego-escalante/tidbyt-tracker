@@ -1,11 +1,6 @@
 const router = require('express').Router();
-const db = require("../../database.js");
-
-const {exec} = require('child_process');
-
-var config = require("config");
-TIDBYT_DEVICE_ID = config.get("tidbyt_device_id")
-TIDBYT_API_TOKEN = config.get("tidbyt_api_token")
+const db = require("../../db/db.js");
+const pushToTidbyt = require('../../tidbyt/tidbyt.js');
 
 router.get("/", (req, res, next) => {
     if (!req.query.habit) {
@@ -69,59 +64,6 @@ router.post("/", (req, res, next) => {
 });
 
 module.exports = router;
-
-function pushToTidbyt(habit, color, first_tracked_day = "", color_failure = "", color_neutral = "", background = false) {
-    if (!habit) {
-        console.log("Can't push to tidbyt device; no habit defined.");
-        return;
-    }
-
-    var render_command = `pixlet render tidbyt_tracker.star habit=${habit}`;
-    
-    if (color) {
-        render_command += ` color=${color}`;
-    }
-
-    if (first_tracked_day) {
-        render_command += ` first_tracked_day=${first_tracked_day}`;
-    }
-
-    if (color_failure) {
-        render_command += ` color_failure=${color_failure}`;
-    }
-
-    if (color_neutral) {
-        render_command += ` color_neutral=${color_neutral}`;
-    }
-
-    var push_command = `pixlet push -i ${habit}Tracker -t ${TIDBYT_API_TOKEN} ${TIDBYT_DEVICE_ID} tidbyt_tracker.webp`;
-    if (background) {
-        push_command += " -b";
-    }
-
-    console.log(`Rendering ${habit} tracker with command: ${render_command}`)
-    exec(render_command, (err, stdout, stderr) => {
-        if (stdout) {
-            console.log(`Pixlet render stdout: ${stdout}`);
-        }
-        if (stderr) {
-            console.log(`Pixlet render stderr: ${stderr}`);
-        }
-        if (err) {
-            return err;
-        }
-        console.log(`Pushing ${habit} tracker.`)
-        exec(push_command, (err, stdout, stderr) => {
-            if (stdout) {
-                console.log(`Pixlet push stdout: ${stdout}`);
-            }
-            if (stderr) {
-                console.log(`Pixlet push stderr: ${stderr}`);
-            }
-            return err;
-        });
-    });
-}
 
 function getFirstDayOfWeek52WeeksAgo(date) {
     var firstDayOfWeek = new Date(date.setDate(date.getDate() - date.getDay())); 

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const db = require("../../database.js");
+const db = require("../../db/db.js");
 
 router.get("/", (req, res, next) => {
     var sql = `SELECT * FROM trackers`;
