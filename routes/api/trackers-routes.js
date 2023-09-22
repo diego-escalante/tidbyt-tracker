@@ -2,28 +2,32 @@ const router = require('express').Router();
 const db = require("../../db/db.js");
 
 router.get("/", (req, res, next) => {
-    var sql = `SELECT * FROM trackers`;
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            res.status(500).json({"error": err.message});
+    db.getTrackers()
+        .then(rows => {
+            res.json(rows);
             return;
-        }
-        res.json(rows);
-    });
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).json({"error": error.message});
+            return;
+        });
 });
 
 router.get("/:id", (req, res, next) => {
-    db.get(`SELECT * FROM trackers WHERE id = ?`, [req.params.id], (err, row) => {
-        if (err) {
-            res.status(500).json({"error": err.message});
+    db.getTracker(req.params.id)
+        .then(row => {
+            if (!row) {
+                res.status(404).json({"error": `No tracker with id ${req.params.id} found!`});
+                return;
+            }
+            res.json(row);
             return;
-        }
-        if (!row) {
-            res.status(404).json({"error": `No tracker with id ${req.params.id} found!`});
-            return;
-        }
-        res.json(row);
-    });
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).json({"error": error.message});
+        });
 });
 
 router.post("/", (req, res, next) => {
@@ -63,7 +67,7 @@ router.post("/", (req, res, next) => {
     columns += ")";
     valuesPlaceholder += ")";
 
-    db.run(`INSERT INTO trackers ${columns} VALUES ${valuesPlaceholder}`, values, (err) => {
+    db.olddb.run(`INSERT INTO trackers ${columns} VALUES ${valuesPlaceholder}`, values, (err) => {
         if (err) {
             res.status(500).json({"error": err.message});
             return;

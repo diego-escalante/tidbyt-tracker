@@ -6,18 +6,17 @@ const pushToTidbyt = require('../tidbyt/tidbyt.js');
 cron.schedule("5 0 0 * * *", function () {
     console.log("It's a brand new day! Updating all trackers!");
     
-    // This is basically the same DB call from GET /api/trackers, should probably de-duplicate this code and put all the DB queries together. 
-    var sql = `SELECT * FROM trackers`;
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.log(`Unable to retrieve trackers: ${err}`);
-            return;
-        }
-        
-        for (row of rows) {
-            pushToTidbyt(row.habit, row.color, row.first_tracked_day, row.color_failure, row.color_neutral);
-        }
-        
-    });
-
+    db.getTrackers()
+        .then(rows => {
+            Promise.all(rows.map(row => pushToTidbyt(row.habit, row.color, row.first_tracked_day, row.color_failure, row.color_neutral, true)))
+                .then(results => {
+                    console.log(`Updated all trackers!`);
+                })
+                .catch(error => {
+                    console.error("Unable to update all trackers: ", error)
+                });
+        })
+        .catch(error => {
+            console.error("Unable to retrieve data for trackers:", error);
+        })
   });

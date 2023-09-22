@@ -13,7 +13,7 @@ router.get("/", (req, res, next) => {
     var from = req.query.from ? req.query.from : getFirstDayOfWeek52WeeksAgo(new Date()).toISOString().slice(0, 10);
 
     var sql = `SELECT date, status FROM habits WHERE habit = '${req.query.habit}' AND date BETWEEN '${from}' AND '${to}'`;
-    db.all(sql, (err, rows) => {
+    db.olddb.all(sql, (err, rows) => {
         if (err) {
             res.status(500).json({"error": err.message});
             return;
