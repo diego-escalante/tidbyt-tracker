@@ -1,12 +1,16 @@
-var express = require("express");
-var app = express();
+const express = require("express");
+const app = express();
+
+// Load up the cron tasks
+require('./cron/tidbyt-cron.js');
 
 const trackersRoutes = require('./routes/api/trackers-routes.js');
 const habitsRoutes = require('./routes/api/habits-routes.js');
 
-var HTTP_PORT = 8000;
 
-var bodyParser = require("body-parser");
+const HTTP_PORT = 8000;
+
+const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 

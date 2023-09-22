@@ -1,5 +1,4 @@
 var sqlite3 = require("sqlite3")
-
 const DBSOURCE = "./db/db.sqlite"
 
 let db = new sqlite3.Database(DBSOURCE, (err) => {
@@ -21,7 +20,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             }
             db.run(`CREATE TABLE IF NOT EXISTS trackers (
                 id INTEGER PRIMARY KEY,
-                habit TEXT NOT NULL,
+                habit TEXT NOT NULL UNIQUE,
                 first_tracked_day TEXT,
                 color TEXT,
                 color_failure TEXT,

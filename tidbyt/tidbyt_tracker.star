@@ -7,7 +7,9 @@ FONT = "tom-thumb"
 TRACKER_URL = "http://localhost:8000/api/habits?habit=%s"
 
 def get_data(habit):
-    rep = http.get(TRACKER_URL % habit)
+    # habit names could have spaces. Prepare the names appropriately for using as query parameters.
+    sanitized_habit = habit.replace(" ", "%20")
+    rep = http.get(TRACKER_URL % sanitized_habit)
     if rep.status_code != 200:
         return -1
     return rep.json()

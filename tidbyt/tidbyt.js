@@ -11,7 +11,7 @@ function pushToTidbyt(habit, color = "", first_tracked_day = "", color_failure =
         return;
     }
 
-    var render_command = `pixlet render ${tidbyt_path}/tidbyt_tracker.star habit=${habit}`;
+    var render_command = `pixlet render ${tidbyt_path}/tidbyt_tracker.star habit="${habit}"`;
     
     if (color) {
         render_command += ` color=${color}`;
@@ -29,7 +29,9 @@ function pushToTidbyt(habit, color = "", first_tracked_day = "", color_failure =
         render_command += ` color_neutral=${color_neutral}`;
     }
 
-    var push_command = `pixlet push -i ${habit}Tracker -t ${tidbyt_api_token} ${tidbyt_device_id} ${tidbyt_path}/tidbyt_tracker.webp`;
+    // Installation IDs cannot have spaces, only alphanumeric characters.
+    var installation_id = `${habit.replace(" ", "")}Tracker`;
+    var push_command = `pixlet push -i ${installation_id} -t ${tidbyt_api_token} ${tidbyt_device_id} ${tidbyt_path}/tidbyt_tracker.webp`;
     if (background) {
         push_command += " -b";
     }
