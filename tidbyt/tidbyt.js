@@ -5,7 +5,19 @@ const tidbyt_device_id = config.get("tidbyt_device_id");
 const tidbyt_api_token = config.get("tidbyt_api_token");
 const tidbyt_path = "./tidbyt";
 
-function pushToTidbyt(habit, color = "", first_tracked_day = "", color_failure = "", color_neutral = "", background = false) {
+function pushTrackersToTidbyt(trackers, background) {
+    return new Promise((resolve, reject) => {
+        Promise.all(trackers.map(tracker => pushTrackerToTidbyt(tracker.habit, tracker.color, tracker.first_tracked_day, tracker.color_failure, tracker.color_neutral, background)))
+            .then(results => {
+                resolve(results);
+            })
+            .catch(error => {
+                reject(error);
+            });
+    });
+}
+
+function pushTrackerToTidbyt(habit, color = "", first_tracked_day = "", color_failure = "", color_neutral = "", background) {
     return new Promise((resolve, reject) => {
         if (!habit) {
             return reject(new Error("Can't push to tidbyt device; no habit defined."));
@@ -62,9 +74,6 @@ function pushToTidbyt(habit, color = "", first_tracked_day = "", color_failure =
             });
         });
     });
-    
-
-
 }
 
-module.exports = pushToTidbyt;
+module.exports = pushTrackersToTidbyt;

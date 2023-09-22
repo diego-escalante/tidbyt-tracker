@@ -1,4 +1,5 @@
-var sqlite3 = require("sqlite3")
+const sqlite3 = require("sqlite3")
+const pushTrackersToTidbyt = require('../tidbyt/tidbyt.js');
 const DBSOURCE = "./db/db.sqlite"
 
 let db = new sqlite3.Database(DBSOURCE, (err) => {
@@ -10,6 +11,8 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                 console.log("Ensured that required tables exist.")
                 console.log("Connected to the sqlite database successfully!");
                 // generateTestEntries("Walk Ginger");
+                console.log("Updating all trackers!")
+                updateAllTrackers();
             })
             .catch(error => {
                 console.error("Unable to create table!");
@@ -80,6 +83,25 @@ function generateTestEntries(habit) {
         });
     }
     console.log("Generated entries!")
+}
+
+
+// TODO: This is basically a copy of the logic in the tidbyt cron module, but I don't believe it is
+//  worth the abstraction at this time. It can be reconsidered in the future depending on use.
+function updateAllTrackers() {
+    exports.getTrackers()
+        .then(rows => {
+            pushTrackersToTidbyt(rows, false)
+                .then(results => {
+                    console.log(`Updated all trackers!`);
+                })
+                .catch(error => {
+                    console.error("Unable to update all trackers: ", error);
+                });
+        })
+        .catch(error => {
+            console.error("Unable to retrieve data for trackers:", error);
+        })
 }
 
 // Trackers Table

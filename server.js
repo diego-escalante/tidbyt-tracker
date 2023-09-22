@@ -1,12 +1,14 @@
 const express = require("express");
 const app = express();
 
+const db = require("./db/db.js");
+const pushTrackersToTidbyt = require('./tidbyt/tidbyt.js');
+
 // Load up the cron tasks
 require('./cron/tidbyt-cron.js');
 
 const trackersRoutes = require('./routes/api/trackers-routes.js');
 const habitsRoutes = require('./routes/api/habits-routes.js');
-
 
 const HTTP_PORT = 8000;
 
