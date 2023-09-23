@@ -1,5 +1,10 @@
 const sqlite3 = require("sqlite3")
 const pushTrackersToTidbyt = require('../tidbyt/tidbyt.js');
+
+const dayjs = require('dayjs');
+var customParseFormat = require('dayjs/plugin/customParseFormat');
+dayjs.extend(customParseFormat);
+
 const DBSOURCE = "./db/db.sqlite"
 
 let db = new sqlite3.Database(DBSOURCE, (err) => {
@@ -10,7 +15,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             .then(results => {
                 console.log("Ensured that required tables exist.")
                 console.log("Connected to the sqlite database successfully!");
-                // generateTestEntries("Walk Ginger");
+                generateTestEntries("Walk Ginger");
                 console.log("Updating all trackers!")
                 updateAllTrackers();
             })
@@ -109,7 +114,7 @@ function updateAllTrackers() {
         })
 }
 
-// Trackers Table
+// === Trackers Table ===
 
 exports.getTrackers = function() {
     return new Promise((resolve, reject) => {
@@ -200,7 +205,64 @@ exports.deleteTracker = function(id) {
             }
             return resolve(this.changes);
         });
-    })
+    });
+}
+
+// === Habits Table ===
+
+exports.getHabits = function(habit, from, to) {
+    return new Promise((resolve, reject) => {
+
+        var sql = 'SELECT * FROM habits';
+        var params = [];
+
+        if (habit || from || to) {
+            sql += ' WHERE';
+
+            if (habit) {
+                // Validate habit.
+                if (!isHabitNameValid(habit)) {
+                    return reject(new Error(`Cannot get habit data; habit ${habit} is invalid.`));
+                }
+                sql += ' habit = ?';
+                params.push(habit);
+
+                if (from || to) {
+                    sql += ' AND';
+                }
+            }
+    
+            if (from || to) {
+                // If from or to is set, ensure both are set.
+                if (!from || !to) {
+                    return reject(new Error(`Cannot get habit data; both from and to must be set, or neither.`));
+                }
+    
+                // Validate from and to.
+                if (!isDateValid(from)) {
+                    return reject(new Error(`Cannot get habit data; from date ${from} is invalid.`));
+                }
+                if (!isDateValid(to)) {
+                    return reject(new Error(`Cannot get habit data; to date ${to} is invalid.`));
+                }
+
+                sql += ' date BETWEEN ? AND ?';
+                params.push(from, to);
+            }
+
+        }
+        
+        db.all(sql, params, (err, rows) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve(rows);
+        });
+    });
+}
+
+function isDateValid(date) {
+    return dayjs(date, 'YYYY-MM-DD', true).isValid()
 }
 
 function isHabitNameValid(habit) {

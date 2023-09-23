@@ -3,27 +3,14 @@ const db = require("../../db/db.js");
 const pushToTidbyt = require('../../tidbyt/tidbyt.js');
 
 router.get("/", (req, res, next) => {
-    if (!req.query.habit) {
-        res.status(400).json({"error": "No habit specified in query parameter."});
-        return;
-    }
-
-    // TODO: Could validate req.query.to and req.query.from before using.
-    var to = req.query.to ? req.query.to : new Date().toISOString().slice(0, 10); 
-    var from = req.query.from ? req.query.from : getFirstDayOfWeek52WeeksAgo(new Date()).toISOString().slice(0, 10);
-
-    var sql = `SELECT date, status FROM habits WHERE habit = '${req.query.habit}' AND date BETWEEN '${from}' AND '${to}'`;
-    db.olddb.all(sql, (err, rows) => {
-        if (err) {
-            res.status(500).json({"error": err.message});
+    db.getHabits(req.query.habit, req.query.from, req.query.to)
+        .then(result => {
+            res.json(result);
             return;
-        }
-        map = {}
-        for (row of rows) {
-            map[row.date] = row.status;
-        }
-        res.json(map);
-    });
+        })
+        .catch(error => {
+            res.status(500).json({"error": error.message});
+        })
 });
 
 router.post("/", (req, res, next) => {

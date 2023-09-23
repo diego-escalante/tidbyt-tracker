@@ -4,17 +4,22 @@ load("time.star", "time")
 
 FONT = "tom-thumb"
 
-TRACKER_URL = "http://localhost:8000/api/habits?habit=%s"
+TRACKER_URL = "http://localhost:8000/api/habits?habit=%s&from=%s&to=%s"
 
-def get_data(habit):
+def get_data(habit, from_date, to_date):
     # habit names could have spaces. Prepare the names appropriately for using as query parameters.
     sanitized_habit = habit.replace(" ", "%20")
-    rep = http.get(TRACKER_URL % sanitized_habit)
+    rep = http.get(TRACKER_URL % (sanitized_habit, from_date, to_date))
     if rep.status_code != 200:
         return -1
-    return rep.json()
 
-def build_days(habit_data, first_tracked_day, color_success, color_failure, color_neutral):
+    datesToStatus = {}
+    for row in rep.json():
+        datesToStatus[row.get('date')] = row.get('status')
+
+    return datesToStatus
+
+def get_dates():
     now = time.now()
     today = time.time(year=now.year, month=now.month, day=now.day)
 
@@ -24,6 +29,9 @@ def build_days(habit_data, first_tracked_day, color_success, color_failure, colo
     # Start at the first day.
     starting_day = today - time.hour * 24 * (total_days_displayed - 1)
 
+    return (starting_day, today, total_days_displayed)
+
+def build_days(starting_day, today, total_days_displayed, habit_data, first_tracked_day, color_success, color_failure, color_neutral):
     weeks = []
     week = []
     streak = 0
@@ -141,12 +149,14 @@ def main(config):
     color_failure = config.get("color_failure", "#ff0000")
     color_neutral = config.get("color_neutral", "#111111")
 
-    data = get_data(habit)
+    (starting_day, today, total_days_displayed) = get_dates()
+
+    data = get_data(habit, starting_day.format("2006-01-02"), today.format("2006-01-02"))
 
     if data == -1:
         return render_message("Unable to get habit data!")
 
-    (calendar, rate, streak) = build_days(data, first_tracked_day, color_success, color_failure, color_neutral)
+    (calendar, rate, streak) = build_days(starting_day, today, total_days_displayed, data, first_tracked_day, color_success, color_failure, color_neutral)
 
     return render.Root(
         child = render.Column(
