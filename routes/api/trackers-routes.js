@@ -36,94 +36,43 @@ router.post("/", (req, res, next) => {
         return;
     }
 
-    var columns = "(habit";
-    var values = [req.body.habit];
-    var valuesPlaceholder = '(?';
-
-    if (req.body.first_tracked_day) {
-        columns += ", first_tracked_day";
-        values.push(req.body.first_tracked_day);
-        valuesPlaceholder += ", ?";
-    }
-
-    if (req.body.color) {
-        columns += ", color";
-        values.push(req.body.color);
-        valuesPlaceholder += ", ?";
-    }
-
-    if (req.body.color_failure) {
-        columns += ", color_failure";
-        values.push(req.body.color_failure);
-        valuesPlaceholder += ", ?";
-    }
-
-    if (req.body.color_neutral) {
-        columns += ", color_neutral";
-        values.push(req.body.color_neutral);
-        valuesPlaceholder += ", ?";
-    }
-
-    columns += ")";
-    valuesPlaceholder += ")";
-
-    db.olddb.run(`INSERT INTO trackers ${columns} VALUES ${valuesPlaceholder}`, values, (err) => {
-        if (err) {
-            res.status(500).json({"error": err.message});
+    db.createTracker(req.body.habit, req.body.first_tracked_day, req.body.color, req.body.color_failure, req.body.color_neutral)
+        .then(_ => {
+            res.json({"message":"Ok"});
             return;
-        }
-        res.json({"message":"Ok"});
-    });
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).json({"error": error.message});
+        });
 });
 
 router.patch("/:id", (req, res, next) => {
-    var data = {
-        habit: req.body.habit,
-        first_tracked_day: req.body.first_tracked_day,
-        color: req.body.color,
-        color_failure: req.body.color_failure,
-        color_neutral: req.body.color_neutral
-    }
-    db.run(
-        `UPDATE trackers SET 
-           habit = COALESCE(?, habit), 
-           first_tracked_day = COALESCE(?, first_tracked_day), 
-           color = COALESCE(?, color),
-           color_failure = COALESCE(?, color_failure),
-           color_neutral = COALESCE(?, color_neutral)
-           WHERE id = ?`,
-        [data.habit, data.first_tracked_day, data.color, data.color_failure, data.color_neutral, req.params.id],
-        function(err, result) {
-            if (err) {
-                res.status(500).json({"error": err.message});
-                return;
-            }
-            if (this.changes == 0) {
-                res.status(400).json({"error": "No changes were made."});
-                return;
-            }
+    db.updateTracker(req.params.id, req.body.habit, req.body.first_tracked_day, req.body.color, req.body.color_failure, req.body.color_neutral)
+        .then(result => {
             res.json({
                 message: "success",
-                changes: this.changes
+                changes: result
             });
-    });
+            return;
+        })
+        .catch(error => {
+            res.status(500).json({"error": error.message})
+        });
 });
 
 router.delete("/:id", (req, res, next) => {
-    db.run(
-        'DELETE FROM trackers WHERE id = ?',
-        req.params.id,
-        function(err, result) {
-            if (err){
-                res.status(400).json({"error": res.message});
-                return;
-            }
-            if (this.changes == 0) {
-                res.status(400).json({"error": "No changes were made."});
-                return;
-            }
-            res.json({"message":"deleted", changes: this.changes});
-    });
+    db.deleteTracker(req.params.id)
+        .then(result => {
+            res.json({
+                message: "deleted",
+                changes: result
+            });
+            return;
+        })
+        .catch(error => {
+            res.status(500).json({"error": error.message});
+        });
 });
 
 module.exports = router;

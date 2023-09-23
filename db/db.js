@@ -21,6 +21,8 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
     }
 });
 
+// TODO: This function is nice but only relevant if the db hasn't been initialized.
+//   Can be removed once a DB init process has been formalized.
 function createTrackersTable() {
     return new Promise((resolve, reject) => {
         db.run(`CREATE TABLE IF NOT EXISTS trackers (
@@ -40,14 +42,17 @@ function createTrackersTable() {
     })
 }
 
+// TODO: This function is nice but only relevant if the db hasn't been initialized.
+//   Can be removed once a DB init process has been formalized.
 function createHabitsTable() {
     return new Promise((resolve, reject) => {
         db.run(`CREATE TABLE IF NOT EXISTS habits (
+            id INTEGER PRIMARY KEY,
             date DATE NOT NULL DEFAULT CURRENT_DATE,
             habit TEXT NOT NULL,
             status TEXT NOT NULL,
-            PRIMARY KEY (date, habit),
-            CONSTRAINT valid_date CHECK(date IS date(date, '+0 days'))
+            UNIQUE(date, habit),
+            CONSTRAINT valid_date CHECK(date is date(date, '+0 days'))
             )`,
         (err) => {
             if (err) {
@@ -130,6 +135,82 @@ exports.getTracker = function(id) {
             resolve(row);
         });
     });
+}
+
+exports.createTracker = function(habit, first_tracked_day, color, color_failure, color_neutral) {
+    return new Promise((resolve, reject) => {
+        if (!isHabitNameValid(habit)) {
+            return reject(new Error(`Cannot create tracker, as habit name ${habit} is invalid.`));
+        }
+
+        db.run(`INSERT INTO trackers (habit, first_tracked_day, color, color_failure, color_neutral) VALUES (?, ?, ?, ?, ?)`,
+            [habit, first_tracked_day, color, color_failure, color_neutral], 
+            (err) => {
+            if (err) {
+                reject(err);
+            }
+            resolve();
+        });
+    });
+}
+
+exports.updateTracker = function(id, habit, first_tracked_day, color, color_failure, color_neutral) {
+    return new Promise((resolve, reject) => {
+        if (!Number.isInteger(Number(id))) {
+            return reject(new Error(`Cannot update tracker; id ${id} is invalid.`));
+        }
+
+        if (habit && !isHabitNameValid(habit)) {
+            return reject(new Error(`Cannot update tracker; habit ${habit} is invalid.`));
+        }
+
+        db.run(
+            `UPDATE trackers SET 
+               habit = COALESCE(?, habit), 
+               first_tracked_day = COALESCE(?, first_tracked_day), 
+               color = COALESCE(?, color),
+               color_failure = COALESCE(?, color_failure),
+               color_neutral = COALESCE(?, color_neutral)
+               WHERE id = ?`,
+            [habit, first_tracked_day, color, color_failure, color_neutral, id],
+            function(err, result) {
+            if (err) {
+                return reject(err);
+            }
+            if (this.changes == 0) {
+                return reject(new Error("No changes were made."));
+            }
+            return resolve(this.changes);
+        });
+    });
+}
+
+exports.deleteTracker = function(id) {
+    return new Promise((resolve, reject) => {
+        if (!Number.isInteger(Number(id))) {
+            return reject(new Error(`Cannot delete tracker; id ${id} is invalid.`));
+        }
+
+        db.run('DELETE FROM trackers WHERE id = ?', id, function(err, result) {
+            if (err){
+                return reject(err);
+            }
+            if (this.changes == 0) {
+                return reject(new Error("No changes were made."));
+            }
+            return resolve(this.changes);
+        });
+    })
+}
+
+function isHabitNameValid(habit) {
+    // If habit is not a string or if it's empty or if it's just whitespace, or if it has whitespace at the start or finish, it is invalid.
+    if ((typeof habit !== 'string' && !(habit instanceof String)) || !habit.trim() || habit !== habit.trim()) {
+        return false;
+    }
+    // The habit is valid if it is alphanumeric (with spaces in between).
+    return /^[A-Za-z0-9\s]+$/.test(habit);
+
 }
 
 // TODO: remove after all the db code is moved to this module.
