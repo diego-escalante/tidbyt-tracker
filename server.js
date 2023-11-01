@@ -1,9 +1,6 @@
 const express = require("express");
 const app = express();
 
-const db = require("./db/db.js");
-const pushTrackersToTidbyt = require('./tidbyt/tidbyt.js');
-
 // Load up the cron tasks
 require('./cron/tidbyt-cron.js');
 

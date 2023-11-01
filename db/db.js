@@ -1,5 +1,5 @@
 const sqlite3 = require("sqlite3")
-const pushTrackersToTidbyt = require('../tidbyt/tidbyt.js');
+const tidbyt = require('../tidbyt/tidbyt.js');
 
 const dayjs = require('dayjs');
 var customParseFormat = require('dayjs/plugin/customParseFormat');
@@ -15,7 +15,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             .then(results => {
                 console.log("Ensured that required tables exist.")
                 console.log("Connected to the sqlite database successfully!");
-                generateTestEntries("Walk Ginger");
+                // generateTestEntries("Walk Ginger");
                 console.log("Updating all trackers!")
                 updateAllTrackers();
             })
@@ -101,7 +101,7 @@ function generateTestEntries(habit) {
 function updateAllTrackers() {
     exports.getTrackers()
         .then(rows => {
-            pushTrackersToTidbyt(rows, false)
+            tidbyt.pushTrackers(rows, false)
                 .then(results => {
                     console.log(`Updated all trackers!`);
                 })
@@ -261,8 +261,45 @@ exports.getHabits = function(habit, from, to) {
     });
 }
 
+exports.createHabit = function(habit, status, date) {
+    return new Promise((resolve, reject) => {
+        if (!isHabitNameValid(habit)) {
+            return reject(new Error(`Cannot create habit; habit name ${habit} is invalid.`));
+        }
+
+        if (!isStatusValid) {
+            return reject(new Error(`Cannot create habit; status ${status} is invalid.`));
+        }
+
+        var sql;
+        var params;
+        if (date) {
+            if (!isDateValid(date)) {
+                return reject(new Error(`Cannot create habit; date ${date} is invalid.`));
+            }
+            sql = `REPLACE INTO habits (date, habit, status) VALUES (?, ?, ?)`
+            params = [date, habit, status]
+        } else {
+            sql = `REPLACE INTO habits (habit, status) VALUES (?, ?)`
+            params = [habit, status]
+        }
+
+        db.run(sql, params, (err) => {
+            if (err) {
+                return reject(err);
+            }
+            return resolve();
+        });
+    });
+}
+
+function isStatusValid(status) {
+    // If status is not a string it is invalid.
+    return !((typeof habit !== 'string' && !(habit instanceof String)));
+}
+
 function isDateValid(date) {
-    return dayjs(date, 'YYYY-MM-DD', true).isValid()
+    return dayjs(date, 'YYYY-MM-DD', true).isValid();
 }
 
 function isHabitNameValid(habit) {
@@ -274,6 +311,3 @@ function isHabitNameValid(habit) {
     return /^[A-Za-z0-9\s]+$/.test(habit);
 
 }
-
-// TODO: remove after all the db code is moved to this module.
-exports.olddb = db

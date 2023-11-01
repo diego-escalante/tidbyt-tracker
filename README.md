@@ -11,7 +11,6 @@ pip3 install web.py
 
 
 TODOs:
-* Move all DB habit queries to the db module.
 * More constraints on the tables? (color values should be '#XXXXXX').
 * When deleting a tracker, use pixlet to remove from tidbyt too?
 * UI?
@@ -19,3 +18,5 @@ TODOs:
 * Put on Pi and document process
 * Compete README.md
 * Better distinction between 400 error and 500 error?
+* Cron job to delete old data??
+* Replace all Date stuff with Dayjs.

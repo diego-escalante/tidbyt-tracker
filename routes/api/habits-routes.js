@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const db = require("../../db/db.js");
-const pushToTidbyt = require('../../tidbyt/tidbyt.js');
+const tidbyt = require('../../tidbyt/tidbyt.js');
 
 router.get("/", (req, res, next) => {
     db.getHabits(req.query.habit, req.query.from, req.query.to)
@@ -15,7 +15,6 @@ router.get("/", (req, res, next) => {
 
 router.post("/", (req, res, next) => {
     var errors = [];
-
     if (!req.body.habit) {
         errors.push("No habit specified in body.");
     }
@@ -29,32 +28,36 @@ router.post("/", (req, res, next) => {
         return;
     }
 
-    var sql;
-    if (!req.body.date) {
-        sql = `REPLACE INTO habits (habit, status) VALUES ('${req.body.habit}', '${req.body.status}')`;
-    } else {
-        sql = `REPLACE INTO habits (date, habit, status) VALUES ('${req.body.date}', '${req.body.habit}', '${req.body.status}')`;
-    }
-
-    db.run(sql, (err) => {
-        if (err) {
-            res.status(500).json({"error": err.message});
+    db.createHabit(req.body.habit, req.body.status, req.body.date)
+        .then(result => {
+            // This is not very atomic, and having to get all trackers is yucky.
+            db.getTrackers()
+                .then(rows => {
+                    var tracker = rows.find((row) => row.habit == req.body.habit);
+                    if (tracker) {
+                        tidbyt.pushTracker(tracker.habit, tracker.color, tracker.first_tracked_day, tracker.color_failure, tracker.color_neutral, false)
+                            .then(result => {
+                                res.json({"message": "Ok"});
+                                return;
+                            })
+                            .catch(error => {
+                                res.status(500).json({"error": `Updated data successfully but unable to push to Tidbyt: ${error.message}. Consider trying to push again.`});
+                                return;
+                            })
+                    } else {
+                        res.status(500).json({"error": `Updated data successfully but unable to push to Tidbyt because no tracker with the habit ${row.body.habit} was found.`});
+                        return;
+                    }
+                })
+                .catch(error => {
+                    res.status(500).json({"error": `Updated data successfully but unable to get trackers to push to Tidbyt: ${error.message}. Consider trying to push again.`});
+                    return;
+                })
+        })
+        .catch(error => {
+            res.status(500).json({"error": `Unable to save habit data: ${error.message}`});
             return;
-        }
-        res.json({"message":"Ok"});
-    });
-
-    err = pushToTidbyt(req.body.habit)
-    if (err) {
-        console.log("Error when pushing to Tidbyt: " + err)
-    }
+        })    
 });
 
 module.exports = router;
-
-function getFirstDayOfWeek52WeeksAgo(date) {
-    var firstDayOfWeek = new Date(date.setDate(date.getDate() - date.getDay())); 
-    var result = new Date(firstDayOfWeek);
-    result.setDate(firstDayOfWeek.getDate() - 52 * 7);
-    return result;
-}
