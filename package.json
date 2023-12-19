@@ -1,11 +1,10 @@
 {
   "name": "tidbyt-tracker",
   "version": "1.0.0",
-  "description": "A habit tracker to be displayed on a tidbyt.",
+  "description": "Habit trackers to be displayed on a tidbyt.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "echo wow!",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Diego Escalante",
