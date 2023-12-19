@@ -75,6 +75,15 @@ exports.createTracker = function(habit, first_tracked_day, color, color_failure,
     if (!isHabitNameValid(habit)) {
         throw new Error(`Cannot create tracker, as habit name ${habit} is invalid.`);
     }
+    if (color && !isColorValueValid(color)) {
+        throw new Error(`Cannot update tracker; color ${color} is invalid. (Must be in hex code format.)`);
+    }
+    if (color_failure && !isColorValueValid(color_failure)) {
+        throw new Error(`Cannot update tracker; color_failure ${color_failure} is invalid. (Must be in hex code format.)`);
+    }
+    if (color_neutral && !isColorValueValid(color_neutral)) {
+        throw new Error(`Cannot update tracker; color_neutral ${color_neutral} is invalid. (Must be in hex code format.)`);
+    }
     return db.prepare("INSERT INTO trackers (habit, first_tracked_day, color, color_failure, color_neutral) VALUES (?, ?, ?, ?, ?)")
         .run(habit, first_tracked_day, color, color_failure, color_neutral);
 }
@@ -85,6 +94,15 @@ exports.updateTracker = function(id, habit, first_tracked_day, color, color_fail
     }
     if (habit && !isHabitNameValid(habit)) {
         throw new Error(`Cannot update tracker; habit ${habit} is invalid.`);
+    }
+    if (color && !isColorValueValid(color)) {
+        throw new Error(`Cannot update tracker; color ${color} is invalid. (Must be in hex code format.)`);
+    }
+    if (color_failure && !isColorValueValid(color_failure)) {
+        throw new Error(`Cannot update tracker; color_failure ${color_failure} is invalid. (Must be in hex code format.)`);
+    }
+    if (color_neutral && !isColorValueValid(color_neutral)) {
+        throw new Error(`Cannot update tracker; color_neutral ${color_neutral} is invalid. (Must be in hex code format.)`);
     }
 
     return db.prepare(`UPDATE trackers SET 
@@ -208,4 +226,13 @@ function isHabitNameValid(habit) {
     }
     // The habit is valid if it is alphanumeric (with spaces in between).
     return /^[A-Za-z0-9\s]+$/.test(habit);
+}
+
+function isColorValueValid(color) {
+    // If color is not a string or if it's empty or if it's just whitespace, or if it has whitespace at the start or finish, it is invalid.
+    if ((typeof color !== 'string' && !(color instanceof String)) || !color.trim() || color !== color.trim()) {
+        return false;
+    }
+    // The color must be in hex color code format.
+    return /^#[A-Fa-f0-9]{6}$/.test(color);
 }

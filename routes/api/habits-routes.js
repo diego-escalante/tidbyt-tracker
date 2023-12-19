@@ -1,13 +1,17 @@
 const router = require('express').Router();
 const db = require("../../db/db.js");
-const tidbyt = require('../../tidbyt/tidbyt.js');
+const {SqliteError} = require('better-sqlite3')
 
 router.get("/", (req, res, next) => {
     try {
         res.json(db.getHabits(req.query.habit, req.query.from, req.query.to));
     } catch (e) {
-        console.error(e);
-        res.status(500).json({"error": e.message});
+        if (e instanceof SqliteError) {
+            console.error(e);
+            res.status(500).json({"error": e.message});
+        } else {
+            res.status(400).json({"error": e.message});
+        }
     }
 });
 
@@ -20,8 +24,12 @@ router.get("/:id", (req, res, next) => {
             res.json(row);
         }
     } catch (e) {
-        console.error(e);
-        res.status(500).json({"error": e.message});
+        if (e instanceof SqliteError) {
+            console.error(e);
+            res.status(500).json({"error": e.message});
+        } else {
+            res.status(400).json({"error": e.message});
+        }
     }
 });
 
@@ -44,8 +52,12 @@ router.post("/", (req, res, next) => {
         db.createOrUpdateHabit(req.body.habit, req.body.status, req.body.date);
         res.json({"message":"Ok"});
     } catch (e) {
-        console.error(e);
-        res.status(500).json({"error": e.message});
+        if (e instanceof SqliteError) {
+            console.error(e);
+            res.status(500).json({"error": e.message});
+        } else {
+            res.status(400).json({"error": e.message});
+        }
     }
         //TODO: This old code used to push the new habit data to the display. It should be elsewhere probably.
         // .then(result => {
@@ -87,8 +99,12 @@ router.delete("/:id", (req, res, next) => {
             res.status(400).json({"error": `No habit was deleted; no habit with id ${req.params.id}`});
         }
     } catch (e) {
-        console.error(e);
-        res.status(500).json({"error": e.message});
+        if (e instanceof SqliteError) {
+            console.error(e);
+            res.status(500).json({"error": e.message});
+        } else {
+            res.status(400).json({"error": e.message});
+        }
     }
 });
 

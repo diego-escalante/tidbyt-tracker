@@ -18,11 +18,13 @@ sudo apt upgrade
 
 
 TODOs:
-* More constraints on the tables? (color values should be '#XXXXXX').
+
 * When deleting a tracker, use pixlet to remove from tidbyt too?
 * UI?
 * Put on Pi and document process
 * Complete README.md
-* Better distinction between 400 error and 500 error?
 * Replace all Date stuff with Dayjs.
 * Ensure all dates across the codebase are in the local timezone.
+
+Known issues:
+* Cannot remove already set Tracker fields. Either set a new value or delete the Tracker and make a new one.
