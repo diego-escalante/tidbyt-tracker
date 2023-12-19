@@ -1,81 +1,42 @@
-const sqlite3 = require("sqlite3")
-const tidbyt = require('../tidbyt/tidbyt.js');
-
+const DBSOURCE = "./db/tidbyt-tracker.db";
 const dayjs = require('dayjs');
 var customParseFormat = require('dayjs/plugin/customParseFormat');
 dayjs.extend(customParseFormat);
 
-const DBSOURCE = "./db/db.sqlite"
+// Initialize DB connection.
+const db = new require('better-sqlite3')(DBSOURCE);
+console.log("Established connection to the database!");
 
-let db = new sqlite3.Database(DBSOURCE, (err) => {
-    if (err) {
-        throw err;
-    } else {
-        Promise.all([createHabitsTable(), createTrackersTable()])
-            .then(results => {
-                console.log("Ensured that required tables exist.")
-                console.log("Connected to the sqlite database successfully!");
-                // generateTestEntries("Walk Ginger");
-                console.log("Updating all trackers!")
-                updateAllTrackers();
-            })
-            .catch(error => {
-                console.error("Unable to create table!");
-                throw error;
-            });
-    }
-});
+// Create trackers table if it does not exist.
+db.prepare(`CREATE TABLE IF NOT EXISTS trackers (
+    id INTEGER PRIMARY KEY,
+    habit TEXT NOT NULL UNIQUE,
+    first_tracked_day TEXT,
+    color TEXT,
+    color_failure TEXT,
+    color_neutral TEXT
+    )`).run();
 
-// TODO: This function is nice but only relevant if the db hasn't been initialized.
-//   Can be removed once a DB init process has been formalized.
-function createTrackersTable() {
-    return new Promise((resolve, reject) => {
-        db.run(`CREATE TABLE IF NOT EXISTS trackers (
-            id INTEGER PRIMARY KEY,
-            habit TEXT NOT NULL UNIQUE,
-            first_tracked_day TEXT,
-            color TEXT,
-            color_failure TEXT,
-            color_neutral TEXT
-        )`,
-        (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve("trackers");
-        });
-    })
-}
-
-// TODO: This function is nice but only relevant if the db hasn't been initialized.
-//   Can be removed once a DB init process has been formalized.
-function createHabitsTable() {
-    return new Promise((resolve, reject) => {
-        db.run(`CREATE TABLE IF NOT EXISTS habits (
-            id INTEGER PRIMARY KEY,
-            date DATE NOT NULL DEFAULT CURRENT_DATE,
-            habit TEXT NOT NULL,
-            status TEXT NOT NULL,
-            UNIQUE(date, habit),
-            CONSTRAINT valid_date CHECK(date is date(date, '+0 days'))
-            )`,
-        (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
-    });
-}
+// Create habits table if it does not exist.
+db.prepare(`CREATE TABLE IF NOT EXISTS habits (
+    id INTEGER PRIMARY KEY,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    habit TEXT NOT NULL,
+    status TEXT NOT NULL,
+    UNIQUE(date, habit),
+    CONSTRAINT valid_date CHECK(date is date(date, '+0 days'))
+    )`).run();
 
 
 // TODO: Helper function for now, delete later.
 function generateTestEntries(habit) {
-    console.log("Generating test entries...")
+    console.log(`Generating test entries for habit "${habit}"...`)
+
+    var habits = [];
     var currentDate = new Date();
     for (var i = 0; i < 500; i++) {
         currentDate.setDate(currentDate.getDate() - 1);
-        var dateStr = currentDate.toISOString().slice(0, 10);
+        var date = currentDate.toISOString().slice(0, 10);
         var rand = Math.random();
         var status;
         if (rand < 0.7) {
@@ -85,214 +46,152 @@ function generateTestEntries(habit) {
         } else {
             status = "SKIPPED";
         }
-        var sql = `REPLACE INTO habits (date, habit, status) VALUES ('${dateStr}', '${habit}', '${status}')`
-        db.run(sql, (err) => {
-            if (err) {
-                throw err;
-            }
-        });
+        habits.push({"date": date, "habit": habit, "status": status});
     }
-    console.log("Generated entries!")
+    const statement = db.prepare('REPLACE INTO habits (date, habit, status) VALUES (@date, @habit, @status)');
+    const transaction = db.transaction((habits) => {
+        for (const habit of habits) {
+            statement.run(habit);
+        }
+    });
+    transaction(habits);
+    console.log("Generated entries!");
 }
-
-
-// TODO: This is basically a copy of the logic in the tidbyt cron module, but I don't believe it is
-//  worth the abstraction at this time. It can be reconsidered in the future depending on use.
-function updateAllTrackers() {
-    exports.getTrackers()
-        .then(rows => {
-            tidbyt.pushTrackers(rows, false)
-                .then(results => {
-                    console.log(`Updated all trackers!`);
-                })
-                .catch(error => {
-                    console.error("Unable to update all trackers: ", error);
-                });
-        })
-        .catch(error => {
-            console.error("Unable to retrieve data for trackers:", error);
-        })
-}
+generateTestEntries("Walk Ginger");
 
 // === Trackers Table ===
-
 exports.getTrackers = function() {
-    return new Promise((resolve, reject) => {
-        db.all(`SELECT * FROM trackers`, [], (err, rows) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(rows);
-        });
-    });
+    return db.prepare("SELECT * FROM trackers").all();
 }
 
 exports.getTracker = function(id) {
-    return new Promise((resolve, reject) => {
-        if (!Number.isInteger(Number(id))) {
-            return reject(new Error(`Cannot get tracker; id ${id} is invalid.`));
-        }
-
-        db.get(`SELECT * FROM trackers WHERE id = ?`, [id], (err, row) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(row);
-        });
-    });
+    if (!Number.isInteger(Number(id))) {
+        throw new Error(`Cannot get tracker; id ${id} is invalid.`);
+    }
+    return db.prepare("SELECT * FROM trackers WHERE id = ?").get(id);
 }
 
 exports.createTracker = function(habit, first_tracked_day, color, color_failure, color_neutral) {
-    return new Promise((resolve, reject) => {
-        if (!isHabitNameValid(habit)) {
-            return reject(new Error(`Cannot create tracker, as habit name ${habit} is invalid.`));
-        }
-
-        db.run(`INSERT INTO trackers (habit, first_tracked_day, color, color_failure, color_neutral) VALUES (?, ?, ?, ?, ?)`,
-            [habit, first_tracked_day, color, color_failure, color_neutral], 
-            (err) => {
-            if (err) {
-                reject(err);
-            }
-            resolve();
-        });
-    });
+    if (!isHabitNameValid(habit)) {
+        throw new Error(`Cannot create tracker, as habit name ${habit} is invalid.`);
+    }
+    return db.prepare("INSERT INTO trackers (habit, first_tracked_day, color, color_failure, color_neutral) VALUES (?, ?, ?, ?, ?)")
+        .run(habit, first_tracked_day, color, color_failure, color_neutral);
 }
 
 exports.updateTracker = function(id, habit, first_tracked_day, color, color_failure, color_neutral) {
-    return new Promise((resolve, reject) => {
-        if (!Number.isInteger(Number(id))) {
-            return reject(new Error(`Cannot update tracker; id ${id} is invalid.`));
-        }
+    if (!Number.isInteger(Number(id))) {
+        throw new Error(`Cannot update tracker; id ${id} is invalid.`);
+    }
+    if (habit && !isHabitNameValid(habit)) {
+        throw new Error(`Cannot update tracker; habit ${habit} is invalid.`);
+    }
 
-        if (habit && !isHabitNameValid(habit)) {
-            return reject(new Error(`Cannot update tracker; habit ${habit} is invalid.`));
-        }
-
-        db.run(
-            `UPDATE trackers SET 
-               habit = COALESCE(?, habit), 
-               first_tracked_day = COALESCE(?, first_tracked_day), 
-               color = COALESCE(?, color),
-               color_failure = COALESCE(?, color_failure),
-               color_neutral = COALESCE(?, color_neutral)
-               WHERE id = ?`,
-            [habit, first_tracked_day, color, color_failure, color_neutral, id],
-            function(err, result) {
-            if (err) {
-                return reject(err);
-            }
-            if (this.changes == 0) {
-                return reject(new Error("No changes were made."));
-            }
-            return resolve(this.changes);
-        });
-    });
+    return db.prepare(`UPDATE trackers SET 
+                    habit = COALESCE(?, habit), 
+                    first_tracked_day = COALESCE(?, first_tracked_day), 
+                    color = COALESCE(?, color),
+                    color_failure = COALESCE(?, color_failure),
+                    color_neutral = COALESCE(?, color_neutral)
+                    WHERE id = ?`)
+        .run(habit, first_tracked_day, color, color_failure, color_neutral, id);
 }
 
 exports.deleteTracker = function(id) {
-    return new Promise((resolve, reject) => {
-        if (!Number.isInteger(Number(id))) {
-            return reject(new Error(`Cannot delete tracker; id ${id} is invalid.`));
-        }
-
-        db.run('DELETE FROM trackers WHERE id = ?', id, function(err, result) {
-            if (err){
-                return reject(err);
-            }
-            if (this.changes == 0) {
-                return reject(new Error("No changes were made."));
-            }
-            return resolve(this.changes);
-        });
-    });
+    if (!Number.isInteger(Number(id))) {
+        throw new Error(`Cannot delete tracker; id ${id} is invalid.`);
+    }
+    return db.prepare("DELETE FROM trackers WHERE id = ?").run(id);
 }
 
 // === Habits Table ===
-
 exports.getHabits = function(habit, from, to) {
-    return new Promise((resolve, reject) => {
+    var sql = 'SELECT * FROM habits';
+    var params = [];
 
-        var sql = 'SELECT * FROM habits';
-        var params = [];
+    if (habit || from || to) {
+        sql += ' WHERE';
 
-        if (habit || from || to) {
-            sql += ' WHERE';
-
-            if (habit) {
-                // Validate habit.
-                if (!isHabitNameValid(habit)) {
-                    return reject(new Error(`Cannot get habit data; habit ${habit} is invalid.`));
-                }
-                sql += ' habit = ?';
-                params.push(habit);
-
-                if (from || to) {
-                    sql += ' AND';
-                }
+        if (habit) {
+            // Validate habit.
+            if (!isHabitNameValid(habit)) {
+                throw new Error(`Cannot get habit data; habit ${habit} is invalid.`);
             }
-    
+            sql += ' habit = ?';
+            params.push(habit);
+
             if (from || to) {
-                // If from or to is set, ensure both are set.
-                if (!from || !to) {
-                    return reject(new Error(`Cannot get habit data; both from and to must be set, or neither.`));
-                }
-    
-                // Validate from and to.
-                if (!isDateValid(from)) {
-                    return reject(new Error(`Cannot get habit data; from date ${from} is invalid.`));
-                }
-                if (!isDateValid(to)) {
-                    return reject(new Error(`Cannot get habit data; to date ${to} is invalid.`));
-                }
-
-                sql += ' date BETWEEN ? AND ?';
-                params.push(from, to);
+                sql += ' AND';
             }
-
         }
-        
-        db.all(sql, params, (err, rows) => {
-            if (err) {
-                return reject(err);
+
+        if (from || to) {
+            // If from or to is set, ensure both are set.
+            if (!from || !to) {
+                throw new Error(`Cannot get habit data; both from and to must be set, or neither.`);
             }
-            return resolve(rows);
-        });
-    });
+
+            // Validate from and to.
+            if (!isDateValid(from)) {
+                throw new Error(`Cannot get habit data; from date ${from} is invalid.`);
+            }
+            if (!isDateValid(to)) {
+                throw new Error(`Cannot get habit data; to date ${to} is invalid.`);
+            }
+
+            sql += ' date BETWEEN ? AND ?';
+            params.push(from, to);
+        }
+    }
+    return db.prepare(sql).all(params);
 }
 
-exports.createHabit = function(habit, status, date) {
-    return new Promise((resolve, reject) => {
-        if (!isHabitNameValid(habit)) {
-            return reject(new Error(`Cannot create habit; habit name ${habit} is invalid.`));
-        }
-
-        if (!isStatusValid) {
-            return reject(new Error(`Cannot create habit; status ${status} is invalid.`));
-        }
-
-        var sql;
-        var params;
-        if (date) {
-            if (!isDateValid(date)) {
-                return reject(new Error(`Cannot create habit; date ${date} is invalid.`));
-            }
-            sql = `REPLACE INTO habits (date, habit, status) VALUES (?, ?, ?)`
-            params = [date, habit, status]
-        } else {
-            sql = `REPLACE INTO habits (habit, status) VALUES (?, ?)`
-            params = [habit, status]
-        }
-
-        db.run(sql, params, (err) => {
-            if (err) {
-                return reject(err);
-            }
-            return resolve();
-        });
-    });
+exports.getHabit = function(id) {
+    if (!Number.isInteger(Number(id))) {
+        throw new Error(`Cannot get habit; id ${id} is invalid.`);
+    }
+    return db.prepare("SELECT * FROM habits WHERE id = ?").get(id);
 }
 
+exports.createOrUpdateHabit = function(habit, status, date) {
+    if (!isHabitNameValid(habit)) {
+        throw new Error(`Cannot create habit; habit name ${habit} is invalid.`);
+    }
+
+    if (!isStatusValid) {
+        throw new Error(`Cannot create habit; status ${status} is invalid.`);
+    }
+    var sql;
+    var params;
+    if (date) {
+        if (!isDateValid(date)) {
+            throw new Error(`Cannot create habit; date ${date} is invalid.`);
+        }
+        sql = "REPLACE INTO habits (date, habit, status) VALUES (?, ?, ?)"
+        params = [date, habit, status]
+    } else {
+        sql = "REPLACE INTO habits (habit, status) VALUES (?, ?)"
+        params = [habit, status]
+    }
+
+    db.prepare(sql).run(params);
+}
+
+exports.deleteHabit = function(id) {
+    if (!Number.isInteger(Number(id))) {
+        throw new Error(`Cannot delete habit; id ${id} is invalid.`);
+    }
+    return db.prepare("DELETE FROM habits WHERE id = ?").run(id);
+}
+
+exports.deleteOldHabits = function(olderThanDays) {
+    if (!Number.isInteger(Number(olderThanDays))) {
+        throw new Error(`Cannot delete habits; ${olderThanDays} is an invalid number of days.`);
+    }
+    return db.prepare(`DELETE FROM habits WHERE date < date('now', '-${olderThanDays} day')`).run()
+}
+
+// === Helpers ===
 function isStatusValid(status) {
     // If status is not a string it is invalid.
     return !((typeof habit !== 'string' && !(habit instanceof String)));
@@ -309,5 +208,4 @@ function isHabitNameValid(habit) {
     }
     // The habit is valid if it is alphanumeric (with spaces in between).
     return /^[A-Za-z0-9\s]+$/.test(habit);
-
 }

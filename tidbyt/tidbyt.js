@@ -1,14 +1,19 @@
 const {exec} = require('child_process');
 
 var config = require("config");
-const tidbyt_device_id = config.get("tidbyt_device_id");
-const tidbyt_api_token = config.get("tidbyt_api_token");
+const tidbyt_device_id = config.has("tidbyt_device_id") ? config.get("tidbyt_device_id") : undefined;
+const tidbyt_api_token = config.has("tidbyt_api_token") ? config.get("tidbyt_api_token") : undefined;
 const tidbyt_path = "./tidbyt";
 
 exports.pushTracker = function(habit, color = "", first_tracked_day = "", color_failure = "", color_neutral = "", background) {
     return new Promise((resolve, reject) => {
         if (!habit) {
             return reject(new Error("Can't push to tidbyt device; no habit defined."));
+        }
+
+        if (!tidbyt_api_token || !tidbyt_device_id) {
+            console.log("No tidbyt api token or device id provided, ignoring push to display.")
+            return resolve(habit)
         }
 
         var render_command = `pixlet render ${tidbyt_path}/tidbyt_tracker.star habit="${habit}"`;

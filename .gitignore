@@ -1,4 +1,5 @@
 node_modules
-db.sqlite*
+*.db
 *.webp
 config/default.json
+bruno/
