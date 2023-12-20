@@ -8,6 +8,7 @@ require('./cron/tidbyt-cron.js');
 
 const trackersRoutes = require('./routes/api/trackers-routes.js');
 const habitsRoutes = require('./routes/api/habits-routes.js');
+const mainRoutes = require('./routes/routes.js');
 
 const HTTP_PORT = 8000;
 
@@ -20,10 +21,8 @@ app.listen(HTTP_PORT, () => {
     console.log("Tidbyt Tracker running on port " + HTTP_PORT);
 });
 
-// Root endpoint
-app.get("/", (req, res, next) => {
-    res.json({"message":"Ok"});
-});
+// Main routes.
+app.use('/', mainRoutes);
 
 // Trackers API
 app.use('/api/trackers', trackersRoutes);

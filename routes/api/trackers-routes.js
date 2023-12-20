@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const db = require("../../db/db.js");
-const {SqliteError} = require('better-sqlite3')
+const {SqliteError} = require('better-sqlite3');
 
 router.get("/", (req, res, next) => {
     try {

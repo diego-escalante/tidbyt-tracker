@@ -18,9 +18,6 @@ sudo apt upgrade
 
 
 TODOs:
-
-* When deleting a tracker, use pixlet to remove from tidbyt too?
-* UI?
 * Put on Pi and document process
 * Complete README.md
 * Replace all Date stuff with Dayjs.
@@ -28,3 +25,7 @@ TODOs:
 
 Known issues:
 * Cannot remove already set Tracker fields. Either set a new value or delete the Tracker and make a new one.
+
+Possible future features:
+* UI
+* Automatically deleting trackers from the Tidbyt display.

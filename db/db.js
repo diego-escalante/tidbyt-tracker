@@ -71,6 +71,13 @@ exports.getTracker = function(id) {
     return db.prepare("SELECT * FROM trackers WHERE id = ?").get(id);
 }
 
+exports.getTrackerByHabit = function(habit) {
+    if (!isHabitNameValid(habit)) {
+        throw new Error(`Cannot get tracker; habit ${habit} is invalid.`);
+    }
+    return db.prepare("SELECT * FROM trackers WHERE habit = ?").get(habit);
+}
+
 exports.createTracker = function(habit, first_tracked_day, color, color_failure, color_neutral) {
     if (!isHabitNameValid(habit)) {
         throw new Error(`Cannot create tracker, as habit name ${habit} is invalid.`);
