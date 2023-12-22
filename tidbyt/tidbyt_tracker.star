@@ -51,7 +51,7 @@ def build_days(starting_day, today, total_days_displayed, habit_data, first_trac
                 streak += 1
                 successes += 1
                 color = color_success
-            elif day_status == "FAILURE" or day_status == None:
+            elif day_status == "FAILURE" or (day_status == None and current_day != today):
                 streak = 0
                 fails += 1
                 color = color_failure
