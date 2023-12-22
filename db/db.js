@@ -57,7 +57,6 @@ function generateTestEntries(habit) {
     transaction(habits);
     console.log("Generated entries!");
 }
-generateTestEntries("Walk Ginger");
 
 // === Trackers Table ===
 exports.getTrackers = function() {
