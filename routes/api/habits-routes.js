@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const db = require("../../db/db.js");
+const tidbyt = require("../../tidbyt/tidbyt.js")
 const {SqliteError} = require('better-sqlite3')
 
 router.get("/", (req, res, next) => {
@@ -50,7 +51,10 @@ router.post("/", (req, res, next) => {
 
     try {
         db.createOrUpdateHabit(req.body.habit, req.body.status, req.body.date);
-        res.json({"message":"Ok"});
+        // Update display.
+        tidbyt.pushTracker(db.getTrackerByHabit(req.body.habit))
+        .then(result => res.json({"message":"Ok"}))
+        .catch(error => new Error(error));
     } catch (e) {
         if (e instanceof SqliteError) {
             console.error(e);
@@ -59,32 +63,6 @@ router.post("/", (req, res, next) => {
             res.status(400).json({"error": e.message});
         }
     }
-        //TODO: This old code used to push the new habit data to the display. It should be elsewhere probably.
-        // .then(result => {
-        //     // This is not very atomic, and having to get all trackers is yucky.
-        //     db.getTrackers()
-        //         .then(rows => {
-        //             var tracker = rows.find((row) => row.habit == req.body.habit);
-        //             if (tracker) {
-        //                 tidbyt.pushTracker(tracker.habit, tracker.color, tracker.first_tracked_day, tracker.color_failure, tracker.color_neutral, false)
-        //                     .then(result => {
-        //                         res.json({"message": "Ok"});
-        //                         return;
-        //                     })
-        //                     .catch(error => {
-        //                         res.status(500).json({"error": `Updated data successfully but unable to push to Tidbyt: ${error.message}. Consider trying to push again.`});
-        //                         return;
-        //                     })
-        //             } else {
-        //                 res.status(500).json({"error": `Updated data successfully but unable to push to Tidbyt because no tracker with the habit ${row.body.habit} was found.`});
-        //                 return;
-        //             }
-        //         })
-        //         .catch(error => {
-        //             res.status(500).json({"error": `Updated data successfully but unable to get trackers to push to Tidbyt: ${error.message}. Consider trying to push again.`});
-        //             return;
-        //         })
-        // })  
 });
 
 router.delete("/:id", (req, res, next) => {

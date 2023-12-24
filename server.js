@@ -15,11 +15,16 @@ const HTTP_PORT = 8000;
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(express.static('public'))
 
 // Start server
 app.listen(HTTP_PORT, () => {
     console.log("Tidbyt Tracker running on port " + HTTP_PORT);
 });
+
+app.get('/', (req, res) => {
+    res.render('index');
+  });
 
 // Main routes.
 app.use('/', mainRoutes);

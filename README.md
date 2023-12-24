@@ -40,17 +40,10 @@ Unfortunately, there is currently no UI, so the Tracker is used through a series
 * `{"habit": "Walk Dog", "first_tracked_day": "2023-02-23", "color": "#FFFF00"}`: Creates a new tracker that will display "Walk Dog" habit data, with successful days colored as yellow. Your doggy will thank you.
 
 ## Daily Habit Tracking
-`GET /log` with the following query parameters:
-* `habit`: The name of the habit you're tracking. Must match the name of the tracker you set up in the previous step. Only letters, digits, and spaces are allowed. Because habit names can have spaces, you may need to replace spaces with `%20` in the URL.
-* `date`: (Optional) A date in the format of YYYY-MM-DD. (Defaults to the present day.)
-* `status`: (Optional) A status for that day: SUCCESS, FAILURE, or SKIPPED. (Defaults to SUCCESS.)
+Once individual habit trackers are set up using the process above, you can easily log daily habit activity by visiting `/` in your browser. A very basic UI there will let you select the habit, status, and date to log.
 
-You'll use this endpoint a lot. I suggest bookmarking it. :)
-
-### Examples:
-* `GET /log?habit=Exercise`: Logs the current day as a success for the "Exercise" habit tracker.
-* `GET /log?habit=Walk%20Dog`: Similar to the first example, but for the "Walk Dog" habit; this shows how to handle spaces in the URL.
-* `GET /log?habit=Meditate&date=2023-05-30&status=SKIPPED`: Logs May 30th, 2023 as skipped for the "Meditate" habit tracker.
+# API
+* TODO: Fill out.
 
 # Limitations
 Because of the deliberate choices made for this project, there are known limitations to the Tidbyt Tracker:

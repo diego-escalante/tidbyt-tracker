@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="./js/main.js"></script>
+    <title>Tidbyt Tracker</title>
+</head>
+
+<body>
+    <h1>Tidbyt Tracker</h1>
+    <input type="date" id="dateInput"/>
+    <br>
+    <select id="habitSelect"></select>
+    <br>
+    <button id="successBtn" onclick="logHabit('SUCCESS')">✅</button>
+    <button id="failureBtn" onclick="logHabit('FAILURE')">❌</button>
+    <button id="skippedBtn" onclick="logHabit('SKIPPED')">💤</button>
+    <br>
+    <div id="message"></div>
+</body>
+
+</html>
