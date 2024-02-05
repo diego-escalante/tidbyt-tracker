@@ -52,10 +52,35 @@ Because of the deliberate choices made for this project, there are known limitat
 * If the Tracker is not up and running, it is possible it misses its cron schedule to update the Tidbyt device with a new render at the beginning of a new day. To the user, it will appear that the display got stuck in the past.
 
 # Setup
-0. (TODO: Fill out Raspberry Pi setup steps.)
+
+## Raspberry Pi Setup
+Because the Tidbyt Tracker was designed to be put on a Raspberry Pi, the steps to set up the RPi are provided and are as followed:
+1. Get yourself a modern Raspberry Pi with wifi capabilities. (Raspberry Pi Zero 2 W is a great choice.)
+2. Download and install the [Raspberry Pi Imager](https://www.raspberrypi.com/software/). (You could also choose to install an RPi OS without it manually, but the Imager has some nifty features we are going to use.)
+3. Choose the appropriate Raspberry Pi Device.
+4. Choose an Operating System. (For a Raspberry Pi Zero 2 W, `Raspberry Pi OS (Legacy, 64-bit) Lite` is a great choice, as the Tidbyt Tracker does not need a desktop environment.)
+5. After connecting an SD card that you'll use for the RPi, choose it under Storage.
+6. Click Next. 
+7. You'll be asked if you'd like to apply OS customization settings. Click Edit Settings. Set the following settings:
+    1. (Optional) Set a hostname. (You can use this name to easily make HTTP requests from another device in your network. e.g: http://tidbyt-tracker.local)
+    2. Set a username and password.
+    3. Configure Wireless LAN. This step is important so your RPi automatically connects to your wifi network.
+    4. Set Locale Settings appropriately to the location you intend on using the Tidbyt Tracker.
+    5. Under the Services tab, enable SSH. (Along with the Wireless LAN configuration from above, these configurations allow you to just power up your RPi without the need to hook it up to a screen or keyboard to fully set up.)
+8. After all the configuration settings are set, click Save. On the prompt to use OS customization settings, click Yes.
+9. Continue through any more Imager prompts and install the Rasbperry Pi OS into the SD card.
+10. Insert your storage card into the Rpi, and plug it into power. Let it boot up.
+11. SSH into it.
+12. Run `sudo apt update` and `sudo apt upgrade`.
+13. Continue to follow the Tracker Setup steps below.
+
+## Tracker Setup
 1. Install [Pixlet](https://tidbyt.dev/docs/build/installing-pixlet)
+    * Make sure you download the correct pixlet release. For Raspberry Pi Zero 2 W, you want the linux arm64 version, not amd64.
 2. Install [Node and NPM](https://nodejs.org/en/download)
-3. Clone this repo.
+    * Personally, I found the easiest way to install Nodejs on a Pi Zero is to first install [nvm](https://github.com/nvm-sh/nvm), and then use nvm to install node. (`nvm install --lts`)
+3. Install [Git](https://git-scm.com/downloads) if you don't have it.
+3. Clone this repo: `git clone https://github.com/diego-escalante/tidbyt-tracker.git`
 4. `cd` into the repo.
 5. Run `npm install`.
 6. In the config directory, rename default.json.example to default.json and add your API token and Tidbyt device ID in the file in order to be able to display trackers on your Tidbyt. If either is missing, the app will skip pushing to a Tidbyt (but you can still use `pixlet serve` to test on a browser.)
