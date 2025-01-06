@@ -4,7 +4,7 @@ const express = require("express");
 const app = express();
 
 // Load up the cron tasks
-require('./cron/tidbyt-cron.js');
+const cron = require('./cron/tidbyt-cron.js');
 
 const trackersRoutes = require('./routes/api/trackers-routes.js');
 const habitsRoutes = require('./routes/api/habits-routes.js');
@@ -20,6 +20,9 @@ app.use(express.static('public'))
 // Start server
 app.listen(HTTP_PORT, () => {
     console.log("Tidbyt Tracker running on port " + HTTP_PORT);
+    // On startup, always push the trackers with the data.
+    console.log("Tidbyt Tracker just started! Updating all trackers!")
+    cron.getDataAndUpdateTrackers();
 });
 
 app.get('/', (req, res) => {

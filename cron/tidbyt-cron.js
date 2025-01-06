@@ -2,10 +2,6 @@ const cron = require('node-cron');
 const db = require("../db/db.js");
 const tidbyt = require('../tidbyt/tidbyt.js');
 
-// On startup, always push the trackers with the data.
-console.log("Tidbyt Tracker just started! Updating all trackers!")
-getDataAndUpdateTrackers();
-
 // Push new webp's for all trackers to the tidbyt display at the start of a new day.
 cron.schedule("5 0 0 * * *", function () {
     console.log("It's a brand new day! Updating all trackers!");
@@ -19,7 +15,7 @@ cron.schedule("10 0 0 * * *", function () {
     db.deleteOldHabits(730); // 2 years, why not?
 });
 
-function getDataAndUpdateTrackers() {
+exports.getDataAndUpdateTrackers = function() {
     try {
         tidbyt.pushTrackers(db.getTrackers(), false)
             .then(results => {
