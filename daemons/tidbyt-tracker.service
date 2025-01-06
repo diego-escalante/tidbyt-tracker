@@ -3,7 +3,7 @@ Description=Tidbyt Tracker
 After=network.target
 
 [Service]
-ExecStart=npm start
+ExecStart=/home/diego/.nvm/versions/node/v22.12.0/bin/node server.js
 WorkingDirectory=/home/diego/tidbyt-tracker
 RestartSec=5s
 Restart=always
