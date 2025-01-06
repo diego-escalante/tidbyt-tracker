@@ -1,0 +1,18 @@
+meta {
+  name: Create (Or Update) Habit
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/habits
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "habit": "Exercise",
+    "status": "SUCCESS"
+  }
+}

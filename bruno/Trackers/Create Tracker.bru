@@ -1,0 +1,17 @@
+meta {
+  name: Create Tracker
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/trackers
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "habit": "Exercise"
+  }
+}

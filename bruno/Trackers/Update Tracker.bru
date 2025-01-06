@@ -1,0 +1,17 @@
+meta {
+  name: Update Tracker
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/api/trackers/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "habit": "Exercise Two"
+  }
+}
