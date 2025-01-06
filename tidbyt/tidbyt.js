@@ -69,14 +69,18 @@ exports.pushTracker = function(habit, color = "", first_tracked_day = "", color_
     });
 }
 
-exports.pushTrackers = function(trackers, background) {
-    return new Promise((resolve, reject) => {
-        Promise.all(trackers.map(tracker => exports.pushTracker(tracker.habit, tracker.color, tracker.first_tracked_day, tracker.color_failure, tracker.color_neutral, background)))
-            .then(results => {
-                resolve(results);
-            })
-            .catch(error => {
-                reject(error);
-            });
-    });
+exports.pushTrackers = async function(trackers, background) {
+    var errors = [];
+    for (var tracker of trackers) {
+        try {
+            await exports.pushTracker(tracker.habit, tracker.color, tracker.first_tracked_day, tracker.color_failure, tracker.color_neutral, background);
+        } catch (error) {
+            console.log(error);
+            errors.push(error);
+        }
+    }
+
+    if (errors.length > 0) {
+        throw Error(errors[0]);
+    }
 }
