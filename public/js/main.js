@@ -57,7 +57,7 @@ function logHabit(status) {
                 message = "Day has been skipped.";
                 break;
         }
-        return fetch('/update-trackers');
+        return fetch(`/update-trackers/${habit}`);
     })
     .then(response => {
         if (!response.ok) {

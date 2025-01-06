@@ -56,4 +56,19 @@ router.get("/update-trackers", (req, res, next) => {
     }
 });
 
+router.get("/update-trackers/:habit", (req, res, next) => {
+    try {
+        tidbyt.pushTrackers([db.getTrackerByHabit(req.params.habit)], true)
+            .then(result => {
+                res.json({"message":"Ok"});
+            })
+            .catch(err => {
+                throw err
+            });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({"error": e.message})
+    }
+});
+
 module.exports = router;
