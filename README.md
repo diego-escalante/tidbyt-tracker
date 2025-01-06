@@ -11,6 +11,8 @@ The Tidbyt Tracker was designed to run continuously on a Raspberry Pi connected 
 4. The Tracker pushes the image to Tidbyt servers.
 5. Tidbyt in turn displays the image on the user's Tidbyt device.
 
+This process is due to the fact that the Tidbyt itself does not store data, and because running an RPi on my local network felt more fun of a project, and also cheaper than paying monthly for hosting and data storage.
+
 # Features
 * Displays a rolling-year worth's of daily habit tracking.
 * Allows the user to mark a day as SUCCESS, FAILURE, or SKIPPED in the case no action is needed that day (e.g. rest days for exercise habit tracking).
@@ -43,7 +45,80 @@ Unfortunately, there is currently no UI, so the Tracker is used through a series
 Once individual habit trackers are set up using the process above, you can easily log daily habit activity by visiting `/` in your browser. A very basic UI there will let you select the habit, status, and date to log.
 
 # API
-* TODO: Fill out.
+There are two main components to the Tidbyt Tracker: Trackers and Habits.
+
+## Habits
+Habits are the individual little packages of data. They hold:
+* A habit name
+* A date
+* A status (usually SUCCESS, FAILURE, SKIPPED).
+
+### GET /api/habits
+Returns a list of habit data as JSON. Query parameters can be used to filter this data.
+
+Query parameters:
+* `habit`: the name of the habit to filter for.
+* `from`: a date in the form YYYY-MM-DD, no habit data before this date will be returned.
+* `to`: a date in the form YYYY-MM-DD, no habit data after this date will be returned.
+
+Example query and response:
+`GET /api/habits?habit=Exercise`
+```json
+[
+  {
+    "id": 9,
+    "date": "2025-01-06",
+    "habit": "Exercise",
+    "status": "SUCCESS"
+  },
+  {
+    "id": 71,
+    "date": "2024-12-30",
+    "habit": "Exercise",
+    "status": "FAILURE"
+  }
+]
+```
+
+### GET /api/habits/:id
+Returns a single habit data entry by id.
+
+Example query and response:
+`GET /api/habits/71`
+```json
+{
+    "id": 71,
+    "date": "2024-12-30",
+    "habit": "Exercise",
+    "status": "FAILURE"
+}
+```
+
+
+### POST /api/habits
+TODO
+### DELETE /api/habits/:id
+TODO
+
+## Trackers
+Trackers mostly define how to display habit data in the Tidbyt. They hold:
+* An associated habit name (To filter out data from other habits)
+* A first tracked date (days before this day are ignored)
+* A success color
+* A falure color
+* A skipped color
+
+The colors are represented as a hex string (e.g. #FFAAFF) to draw days depending on if the status is a success, failure, or skipped.
+
+### GET /api/trackers
+TODO
+### GET /api/trackers/:id
+TODO
+### POST /api/trackers
+TODO
+### PATCH /api/trackers/:id
+TODO
+### DELETE /api/trackers/:id
 
 # Limitations
 Because of the deliberate choices made for this project, there are known limitations to the Tidbyt Tracker:
@@ -55,10 +130,10 @@ Because of the deliberate choices made for this project, there are known limitat
 
 ## Raspberry Pi Setup
 Because the Tidbyt Tracker was designed to be put on a Raspberry Pi, the steps to set up the RPi are provided and are as followed:
-1. Get yourself a modern Raspberry Pi with wifi capabilities. (Raspberry Pi Zero 2 W is a great choice.)
+1. Get yourself a modern Raspberry Pi with wifi capabilities.
 2. Download and install the [Raspberry Pi Imager](https://www.raspberrypi.com/software/). (You could also choose to install an RPi OS without it manually, but the Imager has some nifty features we are going to use.)
 3. Choose the appropriate Raspberry Pi Device.
-4. Choose an Operating System. (For a Raspberry Pi Zero 2 W, `Raspberry Pi OS (Legacy, 64-bit) Lite` is a great choice, as the Tidbyt Tracker does not need a desktop environment.)
+4. Choose an Operating System. Go with a `Lite` OS, since the Tidbyt Tracker does not need a desktop environment.
 5. After connecting an SD card that you'll use for the RPi, choose it under Storage.
 6. Click Next. 
 7. You'll be asked if you'd like to apply OS customization settings. Click Edit Settings. Set the following settings:
@@ -76,7 +151,7 @@ Because the Tidbyt Tracker was designed to be put on a Raspberry Pi, the steps t
 
 ## Tracker Setup
 1. Install [Pixlet](https://tidbyt.dev/docs/build/installing-pixlet)
-    * Make sure you download the correct pixlet release. For Raspberry Pi Zero 2 W, you want the linux arm64 version, not amd64.
+    * Make sure you download the correct pixlet release. Particularly, check if you need the arm64 or amd64 (or something else), depending on the architecture of your device.
 2. Install [Node and NPM](https://nodejs.org/en/download)
     * Personally, I found the easiest way to install Nodejs on a Pi Zero is to first install [nvm](https://github.com/nvm-sh/nvm), and then use nvm to install node. (`nvm install --lts`)
 3. Install [Git](https://git-scm.com/downloads) if you don't have it.
@@ -93,7 +168,3 @@ The main reason is that something needs to store the tracking data and Tidbyt do
 
 # Known Issues
 * Cannot remove already set Tracker fields. Either set a new value or delete the Tracker and make a new one.
-
-# Possible Future Features
-* UI
-* Automatically creating/deleting trackers on the Tidbyt device.
