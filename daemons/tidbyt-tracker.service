@@ -1,0 +1,13 @@
+[Unit]
+Description=Tidbyt Tracker
+After=network.target
+
+[Service]
+ExecStart=npm start
+WorkingDirectory=~/tidbyt-tracker
+RestartSec=5s
+Restart=always
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
