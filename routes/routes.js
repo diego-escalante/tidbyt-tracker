@@ -43,7 +43,7 @@ router.get("/log", (req, res, next) => {
 
 router.get("/update-trackers", (req, res, next) => {
     try {
-        tidbyt.pushTrackers(db.getTrackers())
+        tidbyt.pushTrackers(db.getTrackers(), true)
             .then(result => {
                 res.json({"message":"Ok"});
             })

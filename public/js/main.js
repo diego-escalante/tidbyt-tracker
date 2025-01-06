@@ -28,6 +28,8 @@ function logHabit(status) {
     const date = document.getElementById('dateInput').value;
     const habit = document.getElementById('habitSelect').value;
   
+    var message = "";
+
     fetch('/api/habits', {
       method: 'POST',
       headers: {
@@ -41,26 +43,31 @@ function logHabit(status) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(response.json().error);
+            document.getElementById('message').innerText = `Unable to log habit data!`;
+            throw new Error();
         }
-    })
-    .then(result => {
-        var message;
         switch (status) {
             case 'SUCCESS':
-                message = "Great job, stud! :)";
+                message = "Great job, stud!";
                 break;
             case 'FAILURE':
-                message = "Dang. Next time. :(";
+                message = "Dang. Next time.";
                 break;
             case 'SKIPPED':
                 message = "Day has been skipped.";
                 break;
         }
+        return fetch('/update-trackers');
+    })
+    .then(response => {
+        if (!response.ok) {
+            document.getElementById('message').innerText = `Logged habit data, but failed to update the display!`;
+            throw new Error();
+        }
         document.getElementById('message').innerText = message;
     })
     .catch(error => {
-        document.getElementById('message').innerText = `Unable to log habit data! Error: ${error}`;
+        // Do nothing.
     });
   }
 
@@ -73,6 +80,9 @@ function printCurrentDate() {
 function onLoad() {
     setHabitOptions();
     setDefaultDate();
+    document.getElementById("dateInput").addEventListener("change", () => {
+        const outputDiv = document.getElementById("message").innerText = "";
+    });
 }
 
 window.onload = onLoad;

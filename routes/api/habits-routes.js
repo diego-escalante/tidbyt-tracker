@@ -1,6 +1,5 @@
 const router = require('express').Router();
 const db = require("../../db/db.js");
-const tidbyt = require("../../tidbyt/tidbyt.js")
 const {SqliteError} = require('better-sqlite3')
 
 router.get("/", (req, res, next) => {
@@ -51,10 +50,7 @@ router.post("/", (req, res, next) => {
 
     try {
         db.createOrUpdateHabit(req.body.habit, req.body.status, req.body.date);
-        // Update display.
-        tidbyt.pushTracker(db.getTrackerByHabit(req.body.habit))
-        .then(result => res.json({"message":"Ok"}))
-        .catch(error => new Error(error));
+        res.json({"message":"Ok"});
     } catch (e) {
         if (e instanceof SqliteError) {
             console.error(e);

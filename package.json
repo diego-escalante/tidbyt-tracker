@@ -10,10 +10,10 @@
   "author": "Diego Escalante",
   "license": "MIT",
   "dependencies": {
-    "better-sqlite3": "^9.2.2",
-    "config": "^3.3.9",
-    "dayjs": "^1.11.10",
-    "express": "^4.18.2",
-    "node-cron": "^3.0.2"
+    "better-sqlite3": "^11.7.2",
+    "config": "^3.3.12",
+    "dayjs": "^1.11.13",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3"
   }
 }
