@@ -5,7 +5,7 @@ const tidbyt = require('../tidbyt/tidbyt.js');
 // Push new webp's for all trackers to the tidbyt display at the start of a new day.
 cron.schedule("5 0 0 * * *", function () {
     console.log("It's a brand new day! Updating all trackers!");
-    getDataAndUpdateTrackers();
+    module.exports.getDataAndUpdateTrackers();
     
 });
 
